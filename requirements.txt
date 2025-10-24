@@ -1,0 +1,8 @@
+# This file is for convenience only
+# The canonical dependencies are in pyproject.toml
+# Install with: pip install -e .
+
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
+

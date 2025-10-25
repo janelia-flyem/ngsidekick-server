@@ -16,7 +16,7 @@ dependencies = [
     "flask>=3.0.0",
     "flask-cors>=4.0.0",
     "gunicorn>=21.2.0",
-    "ngsidekick @ file://external/ngsidekick",
+    # ngsidekick is installed separately via the vendored submodule (see Dockerfile)
 ]
 
 [project.optional-dependencies]

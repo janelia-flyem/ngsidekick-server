@@ -1,7 +1,7 @@
 # Multi-stage build for optimized production image
 
 # Build stage
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -39,13 +39,14 @@ COPY --chown=appuser:appuser src/ src/
 # Switch to non-root user
 USER appuser
 
-# Expose port
-EXPOSE 5000
+# Expose port (Cloud Run will set PORT env var)
+ENV PORT=8000
+EXPOSE ${PORT}
 
-# Health check
+# Health check (note: Cloud Run ignores HEALTHCHECK, uses its own mechanism)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
+    CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\", \"8000\")}/health')"
 
-# Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "ngsidekick_server.wsgi:app"]
+# Run with gunicorn (bind to PORT env var, which Cloud Run will set)
+CMD gunicorn --bind 0.0.0.0:${PORT} --workers 4 --timeout 120 ngsidekick_server.wsgi:app
 

@@ -15,6 +15,7 @@ license = {text = "MIT"}
 dependencies = [
     "flask>=3.0.0",
     "flask-cors>=4.0.0",
+    "flask-compress>=1.18,<2",
     "gunicorn>=21.2.0",
     # ngsidekick is installed separately via the vendored submodule (see Dockerfile)
 ]

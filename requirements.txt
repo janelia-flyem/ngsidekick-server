@@ -4,5 +4,6 @@
 
 flask>=3.0.0
 flask-cors>=4.0.0
+flask-compress>=1.18,<2
 gunicorn>=21.2.0
 

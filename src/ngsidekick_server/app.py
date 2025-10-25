@@ -3,7 +3,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_compress import Compress
 
-from ngsidekick.segmentprops.segmentprops_selection import select_segment_properties
+from ngsidekick.segmentprops.select_segment_properties import select_segment_properties
 
 
 NAMED_PROPERTIES_FILES = {
@@ -74,9 +74,49 @@ def register_routes(app):
         return jsonify({'error': 'Internal server error'}), 500
 
 
-    @app.route('/tags/<properties_file>/<path:tags>/info')
-    def tags_endpoint(properties_file, tags):
+    @app.route('/segprops/<path:all_components>')
+    def segprops_endpoint(all_components):
+        """
+        Handle both tags and label endpoints.
+        Expected patterns:
+        - /segprops/<properties_file>/tags/<tags>/info
+        - /segprops/<properties_file>/label/<labels>/info
+        
+        Since properties_file may contain slashes, we parse the path to find
+        the /tags/ or /label/ delimiter.
+        """
+        if not all_components.endswith('/info'):
+            return jsonify({'error': 'Path must end with /info'}), 400
+        
+        # Try to find /tags/ or /label/ in the path
+        endpoint_type = None
+        properties_file = None
+        params = None
+        
+        if '/tags/' in all_components:
+            endpoint_type = 'tags'
+            idx = all_components.rfind('/tags/')
+            properties_file = all_components[:idx]
+            params = all_components[idx + len('/tags/'):-len('/info')]
+        elif '/label/' in all_components:
+            endpoint_type = 'label'
+            idx = all_components.rfind('/label/')
+            properties_file = all_components[:idx]
+            params = all_components[idx + len('/label/'):-len('/info')]
+        else:
+            return jsonify({'error': 'Path must contain /tags/ or /label/'}), 400
+        
+        if not properties_file:
+            return jsonify({'error': 'No properties file specified'}), 400
+        
         info = _download_properties_file(properties_file)
+        
+        if endpoint_type == 'tags':
+            return _handle_tags_request(info, params)
+        else:
+            return _handle_label_request(info, params)
+    
+    def _handle_tags_request(info, tags):
         tag_list = [tag for tag in tags.split('/') if tag]
         if not tag_list:
             return jsonify({'error': 'No tags provided'}), 400
@@ -97,13 +137,11 @@ def register_routes(app):
             return jsonify({'error': str(e)}), 400
         
         return jsonify(filtered_info)
-
-    @app.route('/label/<properties_file>/<path:labels>/info')
-    def label_endpoint(properties_file, labels):
-        info = _download_properties_file(properties_file)
+    
+    def _handle_label_request(info, labels):
         label_list = [label for label in labels.split('/') if label]
         if not label_list:
-            return jsonify({'error': 'No tags provided'}), 400
+            return jsonify({'error': 'No labels provided'}), 400
         
         scalar_expressions = {}
         for label in label_list:
@@ -118,7 +156,6 @@ def register_routes(app):
         try:
             filtered_info = select_segment_properties(info, [], scalar_expressions=scalar_expressions)
         except ValueError as e:
-            raise
             return jsonify({'error': str(e)}), 400
         
         return jsonify(filtered_info)
@@ -128,6 +165,11 @@ def register_routes(app):
         if properties_file in NAMED_PROPERTIES_FILES:
             properties_file = NAMED_PROPERTIES_FILES[properties_file]
 
+        for protocol in ['gs', 'http', 'https']:
+            if properties_file.startswith(f'{protocol}:/') and not properties_file.startswith(f'{protocol}://'):
+                properties_file = f'{protocol}://{properties_file[len(f'{protocol}:/'):]}'
+                break
+
         if properties_file.startswith('gs://'):
             properties_file = f'https://storage.googleapis.com/{properties_file[len("gs://"):]}'
         else:
@@ -135,7 +177,7 @@ def register_routes(app):
         
         if not properties_file.endswith('/info'):
             properties_file += '/info'
-        
+
         r = requests.get(properties_file)
         try:
             r.raise_for_status()

@@ -8,11 +8,9 @@ from ngsidekick.segmentprops.select_segment_properties import select_segment_pro
 # https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/example-ngsidekick-server-sources.json
 
 NAMED_PROPERTIES_FILES = {
-    # This is the default properties file for release scenes.
-    #'male-cns-v0.9': 'gs://flyem-male-cns/v0.9/segmentation/combined_properties',
+    'male-cns-v0.9': 'gs://flyem-male-cns/v0.9/segmentation/combined_properties',
 
     # This properties file includes nearly all neuprint columns (much bigger)
-    'male-cns-v0.9': 'gs://flyem-male-cns/v0.9/segmentation/combined_properties',
     'male-cns-v0.9-all': 'gs://flyem-male-cns/v0.9/segmentation/comprehensive_properties',
 
     'manc-v1.2.3': 'gs://manc-seg-v1p2/manc-seg-v1.2/segment_properties_v1.2.3/combined_properties',

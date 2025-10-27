@@ -4,6 +4,19 @@ Http endpoints to supplement neuroglancer scenes.
 
 This little project is still in the experimental/prototyping stage.
 
+## Table of Contents
+
+- [Segment property transformations](#segment-property-transformations)
+- [API](#api)
+  - [Using `.../label/...`](#using-label)
+  - [Using `.../tags/...`](#using-tags)
+    - [Convenience subsets](#convenience-subsets)
+  - [Named datasets](#named-datasets)
+- [Limitations](#limitations)
+- [Future development](#future-development)
+- [Running the Development Server](#running-the-development-server)
+- [Docker Deployment](#docker-deployment)
+
 ## Segment property transformations
 
 The `/segprops/...` API processes an existing `precomputed` segment properties source and filters/transforms it according to expressions you provide as arguments in the URL.
@@ -133,16 +146,18 @@ In API calls such as `<ngsidekick-server>/segprops/<dataset>/label/...`, the `<d
 **Note:** The datasource for `male-cns-v0.9` doesn't include all properties from neuprint.  A more comprehensive set of properties is available via `male-cns-0.9-all`, which includes less commonly used properties like `mancGroup, mancSerial, mcnsSerial` and a few others.  It's a bigger file, so it results in slower queries.
 
 
-### Limitations
+## Limitations
 
-Since arguments are delmited by `/` in the URL, your template strings and expressions can't use `/` internally.  In tag expressions (or numeric properties), you can use pandas `.div()` as a workaround:
+- Since arguments are delmited by `/` in the URL, your template strings and expressions can't use `/` internally.  In tag expressions (or numeric properties), you can use pandas `.div()` as a workaround:
 
-```
-# (The `/label/` API can also produce numeric properties, but your expression must avoid producing `NaN` values.)
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/label/average_tbar_fanout = syn_downstream.div(syn_pre.clip(lower=1))
-```
+    ```
+    # (The `/label/` API can also produce numeric properties, but your expression must avoid producing `NaN` values.)
+    precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/label/average_tbar_fanout = syn_downstream.div(syn_pre.clip(lower=1))
+    ```
 
-For template strings, there is currently no workaround for `/` characters.  You must avoid them in your segment labels.
+    For template strings, there is currently no workaround for `/` characters.  You must avoid them in your segment labels.
+
+- Similarly, the `=` character is used to define new properties (such as tags).  You can't use `=` in your segment labels.
 
 ## Future development
 

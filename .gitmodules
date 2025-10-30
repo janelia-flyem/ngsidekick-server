@@ -1,3 +1,0 @@
-[submodule "external/ngsidekick"]
-	path = external/ngsidekick
-	url = ssh://git@github.com/janelia-flyem/ngsidekick

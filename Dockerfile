@@ -17,7 +17,6 @@ COPY external/ external/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir ./external/ngsidekick && \
     pip install --no-cache-dir .
 
 # Production stage

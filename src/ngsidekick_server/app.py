@@ -1,3 +1,5 @@
+import os
+import re
 import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -16,6 +18,9 @@ NAMED_PROPERTIES_FILES = {
     'manc-v1.2.3': 'gs://manc-seg-v1p2/manc-seg-v1.2/segment_properties_v1.2.3/combined_properties',
     'flywire-v783b': 'gs://flywire-neuprint-artifacts/fafb/v783b/flywire-783b-segment-properties',
 }
+
+class InvalidPropertiesFileError(Exception):
+    pass
 
 def create_app(config=None):
     app = Flask(__name__)
@@ -113,7 +118,14 @@ def register_routes(app):
         if not properties_file:
             return jsonify({'error': 'No properties file specified'}), 400
         
-        info = _download_properties_file(properties_file)
+        try:
+            info = _download_properties_file(properties_file)
+        except InvalidPropertiesFileError as e:
+            raise
+            return jsonify({'error': str(e)}), 400
+        except:
+            raise
+            return jsonify({'error': 'Internal server error'}), 500
         
         if endpoint_type == 'tags':
             return _handle_tags_request(info, params)
@@ -169,6 +181,8 @@ def register_routes(app):
         if properties_file in NAMED_PROPERTIES_FILES:
             properties_file = NAMED_PROPERTIES_FILES[properties_file]
 
+        # Somewhere the URL is being run through normpath, turning parameters 
+        # containing https:// into http:/ (one slash). Fix the prefix.
         for protocol in ['gs', 'http', 'https']:
             if properties_file.startswith(f'{protocol}:/') and not properties_file.startswith(f'{protocol}://'):
                 properties_file = f'{protocol}://{properties_file[len(f'{protocol}:/'):]}'
@@ -176,8 +190,6 @@ def register_routes(app):
 
         if properties_file.startswith('gs://'):
             properties_file = f'https://storage.googleapis.com/{properties_file[len("gs://"):]}'
-        else:
-            return jsonify({'error': 'Invalid properties file'}), 400
         
         if not properties_file.endswith('/info'):
             properties_file += '/info'
@@ -186,10 +198,24 @@ def register_routes(app):
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            return jsonify({'error': f'Failed to fetch properties file {properties_file}: {e}'}), 500
+            raise InvalidPropertiesFileError(f'Failed to fetch properties file {properties_file}: {e}')
         
         info = r.json()
-        return info
+        if info.get('@type') == "neuroglancer_segment_properties":
+            return info
+
+        # If the user provided the source to the parent segmentation info
+        # instead of the segment properties file, find the referenced segment properties file.
+        referenced_file = info.get('segment_properties')
+        if not referenced_file:
+            raise InvalidPropertiesFileError('No segment properties file referenced')
+
+        if not re.match(r'^(gs://|http://|https://)', referenced_file):
+            # Relative path.
+            referenced_file = properties_file[:-len('info')] + referenced_file + '/info'
+            referenced_file = os.path.normpath(referenced_file)
+
+        return _download_properties_file(referenced_file)
         
 
 # For development server

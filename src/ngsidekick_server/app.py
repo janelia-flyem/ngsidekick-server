@@ -64,14 +64,6 @@ def register_routes(app):
         """Health check endpoint."""
         return jsonify({'status': 'healthy'}), 200
     
-    @app.route('/api/v1/example')
-    def example_endpoint():
-        """Example API endpoint."""
-        return jsonify({
-            'message': 'This is an example endpoint',
-            'data': []
-        })
-    
     @app.errorhandler(404)
     def not_found(error):
         """Handle 404 errors."""
@@ -82,7 +74,7 @@ def register_routes(app):
         """Handle 500 errors."""
         return jsonify({'error': 'Internal server error'}), 500
 
-
+    @app.route('/SEGPROPS/<path:all_components>')
     @app.route('/segprops/<path:all_components>')
     def segprops_endpoint(all_components):
         """
@@ -102,6 +94,8 @@ def register_routes(app):
         properties_file = None
         params = None
         
+        all_components = all_components.replace('/TAGS/', '/tags/')
+        all_components = all_components.replace('/LABELS/', '/label/')
         if '/tags/' in all_components:
             endpoint_type = 'tags'
             idx = all_components.rfind('/tags/')

@@ -8,8 +8,8 @@ This little project is still in the experimental/prototyping stage.
 
 - [Segment property transformations](#segment-property-transformations)
 - [API](#api)
-  - [Using `.../label/...`](#using-label)
-  - [Using `.../tags/...`](#using-tags)
+  - [Using `.../LABEL/...`](#using-label)
+  - [Using `.../TAGS/...`](#using-tags)
     - [Convenience subsets](#convenience-subsets)
   - [Named datasets](#named-datasets)
 - [Limitations](#limitations)
@@ -24,11 +24,11 @@ The `/segprops/...` API processes an existing `precomputed` segment properties s
 Overview:
 
 - Define a custom format for the segment labels:
-    - `.../label/{superclass} - {type}`
+    - `.../LABEL/{superclass} - {type}`
 - Reduce UI clutter by showing just a subset of tags from the source data:
-    - `.../tags/superclass/class/somaSide`
+    - `.../TAGS/superclass/class/somaSide`
 - Query for subsets of segments by defining your own tags:
-    - `.../tags/mytag = (trumanHl == "01A" or trumanHl == "01B")`
+    - `.../TAGS/mytag = (trumanHl == "01A" or trumanHl == "01B")`
 
 [Here's an example.](https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/2025-10-27.103606.337212.json) Details below.
 
@@ -36,20 +36,20 @@ Overview:
 
 There are two supported API calls (`label` and `tags`):
 
-- `precomputed://https://<ngsidekick-server>/segprops/<dataset>/label/...`
-- `precomputed://https://<ngsidekick-server>/segprops/<dataset>/tags/...`
+- `precomputed://https://<ngsidekick-server>/segprops/<dataset>/LABEL/...`
+- `precomputed://https://<ngsidekick-server>/segprops/<dataset>/TAGS/...`
 
 **Note**: Although it's common to include all segment properties in a single `source` URL, neuroglancer allows you to provide separate sources for labels, tags, and numeric segment properties (one source for each type of data).
 
 
-### Using `.../label/...`
+### Using `.../LABEL/...`
 
 To provide a custom label segment property (appearing in the neuroglancer segment list), provide a Python format string as a template to combine one or more properties from the source data into a single string.
 
 Example ([link](https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/2025-10-27.093051.846407.json)): `{type} ({somaSide}) [{group}]`
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/label/{type} ({somaSide}) [{group}]
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/LABEL/{type} ({somaSide}) [{group}]
 ```
 
 Results in labels like `AN01A006 (L) [53588]`
@@ -61,18 +61,18 @@ For example, to avoid having empty `type` strings appear at the top of the segme
 Example ([link](https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/2025-10-27.094641.067798.json)):
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/label/type2 = type.replace("", "~") / {type2} ({somaSide}) [{group}]
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/LABEL/type2 = type.replace("", "~") / {type2} ({somaSide}) [{group}]
 ```
 
 
-### Using `.../tags/...`
+### Using `.../TAGS/...`
 
 You can filter/combine any properties from the source data to show as tags in the UI.  Examples below.
 
 Select (only) the tags from the source you want to see ([link](https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/2025-10-27.094838.732871.json)):
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/tags/superclass/class/somaSide
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/TAGS/superclass/class/somaSide
 ```
 
 Or define your own tag with a boolean expression:
@@ -80,13 +80,13 @@ Or define your own tag with a boolean expression:
 ([link](https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/2025-10-27.095757.381530.json))
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/tags/mytag = (trumanHl == "01A" or trumanHl == "01B")
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/TAGS/mytag = (trumanHl == "01A" or trumanHl == "01B")
 ```
 
 ([link](https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/2025-10-27.095856.830318.json))
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/tags/mytag = (trumanHl in ("01A", "01B") and somaSide == "R")
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/TAGS/mytag = (trumanHl in ("01A", "01B") and somaSide == "R")
 ```
 
 Your expressions are evaluated using pandas [`DataFrame.eval()`][eval], which [allows various helper functions][eval-syntax] such as `str.startswith()`, etc. (but is not a full python interpreter).
@@ -97,7 +97,7 @@ Your expressions are evaluated using pandas [`DataFrame.eval()`][eval], which [a
 ([link](https://neuroglancer-demo.appspot.com/#!gs://flyem-user-links/short/2025-10-27.100052.674517.json))
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/tags/kenyon = type.str.startswith("KC")
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/TAGS/kenyon = type.str.startswith("KC")
 ```
 
 You can define your own tags and pass through existing tags at the same time:
@@ -106,7 +106,7 @@ You can define your own tags and pass through existing tags at the same time:
 
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/tags/superclass/class/somaSide/kenyon = type.str.startswith("KC")
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/TAGS/superclass/class/somaSide/kenyon = type.str.startswith("KC")
 ```
 
 #### Convenience subsets
@@ -117,7 +117,7 @@ To pass through **all** tags from the input, use the special name `_all_tags`:
 
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/tags/_all_tags/kenyon = type.str.startswith("KC")
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/TAGS/_all_tags/kenyon = type.str.startswith("KC")
 ```
 
 Or use `_default_tags` to exclude tag categories with more than 1000 options (to avoid UI clutter when the source data includes tags like `supertype`).
@@ -126,18 +126,18 @@ Or use `_default_tags` to exclude tag categories with more than 1000 options (to
 
 
 ```
-precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/tags/_default_tags/kenyon = type.str.startswith("KC")
+precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/TAGS/_default_tags/kenyon = type.str.startswith("KC")
 ```
 
 ### Named datasets
 
-In API calls such as `<ngsidekick-server>/segprops/<dataset>/label/...`, the `<dataset>` argument must be one of the following:
+In API calls such as `<ngsidekick-server>/segprops/<dataset>/LABEL/...`, the `<dataset>` argument must be one of the following:
 
 - One of the hard-coded dataset names [listed in the `ngsidekick-server` code][datasets].
 - A path to a neuroglancer `precomputed` segment properties directory, beginning with `gs://` or `https://`
     - Example:
         ```
-        precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/gs://flyem-male-cns/v0.9/segmentation/combined_properties/label/{type} ({somaSide})
+        precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/gs://flyem-male-cns/v0.9/segmentation/combined_properties/LABEL/{type} ({somaSide})
         ```
 
 [datasets]: https://github.com/janelia-flyem/ngsidekick-server/blob/main/src/ngsidekick_server/app.py#L10
@@ -151,8 +151,8 @@ In API calls such as `<ngsidekick-server>/segprops/<dataset>/label/...`, the `<d
 - Since arguments are delmited by `/` in the URL, your template strings and expressions can't use `/` internally.  In tag expressions (or numeric properties), you can use pandas `.div()` as a workaround:
 
     ```
-    # (The `/label/` API can also produce numeric properties, but your expression must avoid producing `NaN` values.)
-    precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/label/average_tbar_fanout = syn_downstream.div(syn_pre.clip(lower=1))
+    # (The `/LABEL/` API can also produce numeric properties, but your expression must avoid producing `NaN` values.)
+    precomputed://https://ngsidekick-server-833853795110.us-east4.run.app/segprops/male-cns-v0.9/LABEL/average_tbar_fanout = syn_downstream.div(syn_pre.clip(lower=1))
     ```
 
     For template strings, there is currently no workaround for `/` characters.  You must avoid them in your segment labels.

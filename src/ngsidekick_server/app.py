@@ -181,6 +181,18 @@ def register_routes(app):
         if properties_file in NAMED_PROPERTIES_FILES:
             properties_file = NAMED_PROPERTIES_FILES[properties_file]
 
+        # If present, drop the prefix 'precomputed://' or 'precomputed:/'
+        for prefix in ['precomputed://', 'precomputed:/']:
+            if properties_file.startswith(prefix):
+                properties_file = properties_file[len(prefix):]
+                break
+
+        # If present, drop the suffix '|neuroglancer-precomputed'
+        for suffix in ['|neuroglancer-precomputed']:
+            if properties_file.endswith(suffix):
+                properties_file = properties_file[:-len(suffix)]
+                break
+
         # Somewhere the URL is being run through normpath, turning parameters 
         # containing https:// into http:/ (one slash). Fix the prefix.
         for protocol in ['gs', 'http', 'https']:
